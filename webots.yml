@@ -1,23 +1,19 @@
-publish: true
-type: demo
+# Webots Cloud 配置文件
+version: 1
+
+# 要运行的场景文件
+world: webots/worlds/power_inspection_simple.wbt
+
+# 项目信息
 name: "电力巡检任务规划系统"
 description: "基于DeepSeek大模型的多机器人电力巡检任务规划系统"
-version: "1.0"
-
-# 指定要运行的世界文件
-world: "webots/worlds/power_inspection_simple.wbt"
 
 # 控制器配置
 controllers:
   patrol_controller:
     type: python
-    file: "webots/controllers/patrol_controller/patrol_controller.py"
+    file: webots/controllers/patrol_controller/patrol_controller.py
 
-# 需要暴露的端口
-ports:
-  - "5000:5000"
-
-# 启动命令
-start_command: |
-  python app.py &
-  webots --stdout --stderr webots/worlds/power_inspection_simple.wbt
+# 启动 Webots 时执行的命令
+on_start:
+  - python app.py &
