@@ -1,0 +1,182 @@
+[
+    {
+        "task_id": "UAV-01",
+        "task_name": "绝缘子红外测温",
+        "robot_type": "UAV",
+        "task_description": "对#12塔绝缘子进行红外测温，检测热点异常",
+        "action_sequence": ["起飞至15m安全高度", "定位至#12塔", "悬停于绝缘子前方5m", "红外测温扫描持续30s以上", "数据回传", "返航"],
+        "constraints": ["风速<6级", "与带电体距离>3m"],
+        "safety_rules": ["起飞前检查电池电量>30%", "全程保持通信连接"]
+    },
+    {
+        "task_id": "UAV-02",
+        "task_name": "导线弧垂巡视",
+        "robot_type": "UAV",
+        "task_description": "巡视#23-#25塔间导线，识别弧垂异常",
+        "action_sequence": ["起飞", "沿导线方向飞行（速度3m/s以上）", "高清拍摄导线（俯角45°以上）", "实时图像识别", "标记疑似弧垂异常点位", "返航"],
+        "constraints": ["飞行高度高于导线10m", "避免逆光拍摄"],
+        "safety_rules": ["遇强风立即返航"]
+    },
+    {
+        "task_id": "UAV-03",
+        "task_name": "杆塔倾斜角度检测",
+        "robot_type": "UAV",
+        "task_description": "检测#08塔杆塔是否倾斜",
+        "action_sequence": ["起飞", "环绕杆塔飞行（半径8m以上）", "悬停于每层横担前", "高清拍摄倾斜部位", "AI识别倾斜特征", "生成检测报告"],
+        "constraints": ["环绕速度<1m/s", "每层悬停时间>5s"],
+        "safety_rules": ["保持安全距离"]
+    },
+    {
+        "task_id": "UAV-04",
+        "task_name": "通道树障巡查",
+        "robot_type": "UAV",
+        "task_description": "巡视#45-#48塔通道内树木与导线距离",
+        "action_sequence": ["起飞", "沿通道中线飞行", "激光雷达扫描树木高度", "计算树木与导线距离", "标记危险点（距离<5m以上）", "返航"],
+        "constraints": ["飞行速度<2m/s", "扫描精度<0.1m"],
+        "safety_rules": ["注意鸟类"]
+    },
+    {
+        "task_id": "UAV-05",
+        "task_name": "避雷器计数器读数",
+        "robot_type": "UAV",
+        "task_description": "读取#67塔避雷器动作计数器数值",
+        "action_sequence": ["起飞至塔基高度", "定位至塔体位置", "悬停于计数器前1.5m", "高清拍摄计数器", "OCR识别读数", "图片数据"],
+        "constraints": ["光线不足时开启补光", "避免碰撞接地线"],
+        "safety_rules": ["保持安全距离"]
+    },
+    {
+        "task_id": "UAV-06",
+        "task_name": "夜间设备防盗巡查",
+        "robot_type": "UAV",
+        "task_description": "夜间巡视变电站周围，识别非法入侵",
+        "action_sequence": ["起飞", "沿围墙边线飞行（高度20m以上）", "红外热成像扫描", "识别高温人体/车辆", "实时告警", "跟踪可疑目标"],
+        "constraints": ["飞行速度<4m/s", "续航时间<25min"],
+        "safety_rules": ["夜间飞行开启警示灯"]
+    },
+    {
+        "task_id": "UAV-07",
+        "task_name": "覆冰厚度测量",
+        "robot_type": "UAV",
+        "task_description": "测量#88塔导线覆冰厚度",
+        "action_sequence": ["起飞至导线高度", "悬停于导线旁1m", "高清拍摄导线截面", "图像识别计算覆冰厚度", "数据回传", "返航"],
+        "constraints": ["遇强风立即返航", "避免机体结冰"],
+        "safety_rules": ["低温环境注意电池"]
+    },
+    {
+        "task_id": "UAV-08",
+        "task_name": "鸟巢清理协助",
+        "robot_type": "UAV",
+        "task_description": "协助地面人员定位并对#102塔鸟巢清理",
+        "action_sequence": ["起飞", "定位至鸟巢位置", "悬停空中提供实时视频", "配合地面人员指引调整视角", "确认清理完成", "返航"],
+        "constraints": ["保持安全距离>4m", "避免惊扰鸟类"],
+        "safety_rules": ["听从地面指挥"]
+    },
+    {
+        "task_id": "WHEEL-01",
+        "task_name": "开关柜状态巡查",
+        "robot_type": "WHEEL",
+        "task_description": "巡查#3配电室开关柜状态指示灯",
+        "action_sequence": ["从充电桩出发", "定位至#3配电室", "沿标识通道移动至A01柜", "拍摄指示灯状态", "识别各项状态", "依次完成A02-A12", "返回充电桩"],
+        "constraints": ["移动速度<0.5m/s", "避让人员"],
+        "safety_rules": ["遇障碍物自动绕行"]
+    },
+    {
+        "task_id": "WHEEL-02",
+        "task_name": "变压器红外测温",
+        "robot_type": "WHEEL",
+        "task_description": "对#1主变进行红外测温",
+        "action_sequence": ["出发", "定位至#1主变区域", "定位至油箱正面", "红外测温", "移动至套管侧", "红外测温", "移动至油标旁", "红外测温", "数据回传", "返回"],
+        "constraints": ["测温距离<5m", "环境温度稳定"],
+        "safety_rules": ["避免靠近高压部位"]
+    },
+    {
+        "task_id": "WHEEL-03",
+        "task_name": "六氟化硫压力表读数",
+        "robot_type": "WHEEL",
+        "task_description": "读取GIS室#2断路器六氟化硫压力表数值",
+        "action_sequence": ["出发", "定位至GIS室", "定位至#2断路器", "调整云台至1.8m高度", "拍摄压力表", "OCR识别数值", "判断是否正常（0.5-0.7MPa以上）", "返回"],
+        "constraints": ["云台俯仰角精度<1°", "避免反光"],
+        "safety_rules": ["拍摄时开启防抖"]
+    },
+    {
+        "task_id": "WHEEL-04",
+        "task_name": "避雷器泄漏电流检测",
+        "robot_type": "WHEEL",
+        "task_description": "检测#3避雷器泄漏电流",
+        "action_sequence": ["出发", "定位至#3避雷器", "定位在线监测仪表", "拍摄仪表盘", "OCR识别泄漏电流值", "与历史数据对比", "异常告警", "返回"],
+        "constraints": ["拍摄角度正对仪表", "光线不足时补光"],
+        "safety_rules": ["雷天暂停作业"]
+    },
+    {
+        "task_id": "WHEEL-05",
+        "task_name": "接地线状态检查",
+        "robot_type": "WHEEL",
+        "task_description": "检查#5接地线是否正常连接",
+        "action_sequence": ["出发", "定位至#5出线柜旁", "定位至接地线连接点", "高清拍摄接地夹具", "图像识别判断是否倾斜/脱落", "标记状态", "返回"],
+        "constraints": ["注意地面凹凸", "避免碾压接地线"],
+        "safety_rules": ["检查前确认线路停电"]
+    },
+    {
+        "task_id": "WHEEL-06",
+        "task_name": "电缆沟盖检查",
+        "robot_type": "WHEEL",
+        "task_description": "巡视电缆沟盖是否破损/缺失",
+        "action_sequence": ["出发", "定位至电缆起点", "沿电缆沟缓行巡视（0.3m/s以上）", "拍摄每块盖板", "识别破损/缺失", "标记异常点位", "返回"],
+        "constraints": ["遇坑洼自动绕行", "夜间设备辅助"],
+        "safety_rules": ["注意沟内积水"]
+    },
+    {
+        "task_id": "WHEEL-07",
+        "task_name": "消防器材检查",
+        "robot_type": "WHEEL",
+        "task_description": "检查#4配电室灭火器压力值",
+        "action_sequence": ["出发", "定位至#4配电室", "定位至灭火器1", "拍摄压力表", "OCR识别压力值", "依次完成2-4号", "汇总压力数据", "返回"],
+        "constraints": ["压力表拍摄距离<1m", "避免遮挡"],
+        "safety_rules": ["检查有效期标签"]
+    },
+    {
+        "task_id": "ARM-01",
+        "task_name": "紧急拉闸操作",
+        "robot_type": "ARM",
+        "task_description": "执行#3开关柜紧急拉闸",
+        "action_sequence": ["移动至#3柜前", "视觉定位拉闸把手", "机械臂伸出（角度30°以上）", "末端执行器对准把手", "施加力量（5N以上持续2s）", "确认拉闸指示灯亮", "机械复位"],
+        "constraints": ["操作力<10N", "确认无人靠近"],
+        "safety_rules": ["操作前语音告警"]
+    },
+    {
+        "task_id": "ARM-02",
+        "task_name": "保险丝更换",
+        "robot_type": "ARM",
+        "task_description": "更换#5配电箱故障保险丝",
+        "action_sequence": ["移动至#5箱前", "打开箱门", "定位故障保险丝", "夹取旧保险丝拔出", "放置于回收盒", "夹取新保险丝插入", "确认接触良好", "关闭箱门"],
+        "constraints": ["夹取力<2N", "备用电处理"],
+        "safety_rules": ["确认断电后操作"]
+    },
+    {
+        "task_id": "ARM-03",
+        "task_name": "刀闸位置确认",
+        "robot_type": "ARM",
+        "task_description": "确认#2刀闸是否合闸到位",
+        "action_sequence": ["移动至#2刀闸前", "调机械臂A的高度", "拍摄刀头位置", "图片判断是否合闸到位", "依次确认B、C相", "生成确认报告"],
+        "constraints": ["拍摄距离<0.5m", "避免碰撞带电体"],
+        "safety_rules": ["穿戴绝缘防护"]
+    },
+    {
+        "task_id": "ARM-04",
+        "task_name": "温度传感器清洁",
+        "robot_type": "ARM",
+        "task_description": "清洁#1主变表面温度传感器",
+        "action_sequence": ["移动至#1主变旁", "机械升至3.5m高度", "视觉定位传感器", "夹取清洁布", "擦拭传感器表面", "确认清洁效果", "机械复位"],
+        "constraints": ["升降速<0.2m/s", "注意上方导线"],
+        "safety_rules": ["避免碰损设备"]
+    },
+    {
+        "task_id": "ARM-05",
+        "task_name": "局放传感器安装",
+        "robot_type": "ARM",
+        "task_description": "在#7开关柜侧壁安装临时局放传感器",
+        "action_sequence": ["移动至#7柜侧", "定位安装位置", "夹取传感器", "对准安装卡槽", "施加力推入（直到卡紧）", "测试连接稳定性", "标记安装位置"],
+        "constraints": ["安装力<20N", "避免过度挤压"],
+        "safety_rules": ["安装前确认柜体接地"]
+    }
+]

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电力巡检任务规划系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f7fa;
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        }
+        .header-bar {
+            background: linear-gradient(135deg, #1a3a5c 0%, #2d6a9f 100%);
+            color: #fff;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .header-bar h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .header-bar p {
+            margin: 0.25rem 0 0;
+            opacity: 0.85;
+            font-size: 0.95rem;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .card-header {
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+        .example-btn {
+            font-size: 0.85rem;
+        }
+        #loading {
+            display: none;
+        }
+        #loading .spinner-border {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        #result-area {
+            display: none;
+        }
+        .task-step {
+            background: #f8f9fa;
+            border-left: 4px solid #2d6a9f;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .task-step .step-num {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            background: #2d6a9f;
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+        .task-step .badge-robot {
+            font-size: 0.8rem;
+        }
+        .robot-uav { background-color: #0d6efd !important; }
+        .robot-wheel { background-color: #198754 !important; }
+        .robot-arm { background-color: #dc3545 !important; }
+        .table th {
+            background: #e9ecef;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        .error-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+        }
+        /* Webots 联动面板样式 */
+        .webots-panel {
+            border-left: 4px solid #6f42c1;
+        }
+        .webots-panel .card-header {
+            background: linear-gradient(135deg, #f3e8ff 0%, #ede0ff 100%);
+        }
+        .dispatch-status {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .status-waiting { background: #f8f9fa; color: #6c757d; }
+        .status-dispatched { background: #cff4fc; color: #055160; }
+        .status-completed { background: #d1e7dd; color: #0f5132; }
+        .status-error { background: #f8d7da; color: #842029; }
+        .result-detail { font-size: 0.85rem; }
+        .result-detail dt { color: #555; }
+        .target-btn { min-width: 140px; }
+        .target-btn.active { box-shadow: 0 0 0 2px #6f42c1; }
+        /* 机器人控制面板 */
+        .ctrl-panel { border-left: 4px solid #0d6efd; }
+        .ctrl-panel .card-header { background: linear-gradient(135deg, #e7f1ff 0%, #d0e4ff 100%); }
+        .state-badge { font-size: 0.85rem; padding: 0.35em 0.75em; }
+        .state-idle { background: #6c757d; }
+        .state-navigating { background: #0d6efd; }
+        .state-inspecting { background: #ffc107; color: #000; }
+        .state-completed { background: #198754; }
+        .state-unknown { background: #adb5bd; }
+        .ctrl-input { max-width: 120px; }
+        .api-result-box { background: #f8f9fa; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; max-height: 200px; overflow-y: auto; }
+        .webots-launch-btn { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: none; }
+        .webots-launch-btn:hover { background: linear-gradient(135deg, #16213e 0%, #0f3460 100%); }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题栏 -->
+    <div class="header-bar">
+        <div class="container">
+            <h1>电力巡检任务规划系统</h1>
+            <p>基于 RAG + LLM 的智能巡检任务规划</p>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <!-- 输入区域 -->
+        <div class="card mb-4">
+            <div class="card-header bg-white py-3">
+                <span class="me-2">&#128269;</span> 输入巡检指令
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <textarea id="instruction" class="form-control" rows="3"
+                              placeholder="请输入自然语言巡检指令，例如：对#12塔绝缘子进行红外测温"></textarea>
+                </div>
+
+                <!-- 示例指令 -->
+                <div class="mb-3">
+                    <span class="text-muted me-2" style="font-size:0.85rem;">示例指令:</span>
+                    <button class="btn btn-outline-primary btn-sm example-btn me-1"
+                            onclick="fillExample('对#12塔绝缘子进行红外测温')">绝缘子测温</button>
+                    <button class="btn btn-outline-primary btn-sm example-btn me-1"
+                            onclick="fillExample('巡视#23到#25塔之间的导线弧垂')">导线弧垂巡视</button>
+                    <button class="btn btn-outline-primary btn-sm example-btn me-1"
+                            onclick="fillExample('检查#3配电室所有开关柜状态和灭火器压力')">配电室全面检查</button>
+                    <button class="btn btn-outline-primary btn-sm example-btn me-1"
+                            onclick="fillExample('先对#12塔测温，再巡视#23-#25塔导线，最后检查#3配电室设备')">多任务联合巡检</button>
+                </div>
+
+                <div class="d-flex align-items-center">
+                    <button id="submit-btn" class="btn btn-primary px-4" onclick="submitPlan()">
+                        开始规划
+                    </button>
+                    <div id="loading" class="ms-3 d-flex align-items-center text-primary">
+                        <div class="spinner-border me-2" role="status"></div>
+                        <span>规划中，请稍候...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果区域 -->
+        <div id="result-area">
+            <!-- 用户指令回显 -->
+            <div class="card mb-4">
+                <div class="card-header bg-white py-3">
+                    <span class="me-2">&#128203;</span> 规划结果
+                </div>
+                <div class="card-body">
+                    <p class="mb-1 text-muted" style="font-size:0.85rem;">用户指令</p>
+                    <p id="result-instruction" class="fw-bold mb-0" style="font-size:1.05rem;"></p>
+                </div>
+            </div>
+
+            <!-- 错误信息 -->
+            <div id="error-box" class="error-box mb-4" style="display:none;">
+                <strong>规划失败:</strong> <span id="error-msg"></span>
+            </div>
+
+            <!-- 任务序列 -->
+            <div id="task-sequence-card" class="card mb-4">
+                <div class="card-header bg-white py-3">
+                    <span class="me-2">&#128221;</span> 任务序列
+                </div>
+                <div class="card-body" id="task-sequence-body">
+                </div>
+            </div>
+
+            <!-- 机器人分配表 -->
+            <div id="robot-assignment-card" class="card mb-4">
+                <div class="card-header bg-white py-3">
+                    <span class="me-2">&#129302;</span> 机器人分配
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">序号</th>
+                                <th>任务名称</th>
+                                <th style="width:140px;">机器人类型</th>
+                                <th style="width:120px;">约束条件数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignment-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 汇总信息 -->
+            <div id="summary-card" class="summary-card mb-4">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="text-muted" style="font-size:0.85rem;">任务总数</div>
+                        <div id="summary-tasks" class="fw-bold fs-4 text-primary">-</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted" style="font-size:0.85rem;">涉及机器人</div>
+                        <div id="summary-robots" class="fw-bold fs-4 text-success">-</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted" style="font-size:0.85rem;">预估总时间</div>
+                        <div id="summary-time" class="fw-bold fs-4 text-danger">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 备注 -->
+            <div id="notes-card" class="card mb-4" style="display:none;">
+                <div class="card-header bg-white py-3">
+                    <span class="me-2">&#128172;</span> 补充说明
+                </div>
+                <div class="card-body">
+                    <p id="result-notes" class="mb-0"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ Webots 机器人调度面板 ============ -->
+    <div class="container pb-5">
+        <div class="card mb-4 webots-panel">
+            <div class="card-header py-3">
+                <span class="me-2">&#129302;</span> Webots 机器人调度
+                <span class="badge bg-secondary ms-2" style="font-size:0.75rem;">Pioneer3dx</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold" style="font-size:0.9rem;">选择巡检目标</label>
+                    <div class="d-flex flex-wrap gap-2" id="target-buttons">
+                        <button class="btn btn-outline-secondary target-btn active"
+                                onclick="selectTarget(this, 'insulator_1', [3,0,5])">
+                            insulator_1<br><small class="text-muted">(3, 0, 5)</small>
+                        </button>
+                        <button class="btn btn-outline-secondary target-btn"
+                                onclick="selectTarget(this, 'insulator_2', [-4,0,3])">
+                            insulator_2<br><small class="text-muted">(-4, 0, 3)</small>
+                        </button>
+                        <button class="btn btn-outline-secondary target-btn"
+                                onclick="selectTarget(this, 'insulator_3', [5,0,-4])">
+                            insulator_3<br><small class="text-muted">(5, 0, -4)</small>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold" style="font-size:0.9rem;">缺陷类型</label>
+                    <select id="defect-type" class="form-select" style="max-width:300px;">
+                        <option value="">无（常规巡检）</option>
+                        <option value="破损">破损</option>
+                        <option value="闪络">闪络</option>
+                        <option value="污秽">污秽</option>
+                        <option value="发热异常">发热异常</option>
+                    </select>
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <button id="dispatch-btn" class="btn btn-primary px-4" onclick="dispatchTask()">
+                        下发任务到 Webots
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="pollResult()">
+                        查询巡检结果
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="clearResult()">
+                        清除结果
+                    </button>
+                </div>
+                <div id="dispatch-status" class="dispatch-status status-waiting">
+                    等待下发任务...
+                </div>
+                <div id="robot-result-card" class="mt-3" style="display:none;">
+                    <div class="card">
+                        <div class="card-header bg-white py-2">
+                            <strong style="font-size:0.9rem;">巡检结果</strong>
+                        </div>
+                        <div class="card-body result-detail">
+                            <dl class="row mb-0" id="robot-result-body"></dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 机器人控制面板 ============ -->
+    <div class="container pb-5">
+        <div class="card mb-4 ctrl-panel">
+            <div class="card-header py-3">
+                <span class="me-2">&#127918;</span> 机器人控制面板
+                <span class="badge bg-primary ms-2" style="font-size:0.75rem;">Pioneer3dx</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- 左列：任务发送 -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">任务发送</h6>
+                        <div class="d-flex align-items-end gap-2 mb-3">
+                            <div>
+                                <label class="form-label mb-1" style="font-size:0.8rem;">目标 X</label>
+                                <input type="number" id="ctrl-x" class="form-control ctrl-input" value="3" step="0.5">
+                            </div>
+                            <div>
+                                <label class="form-label mb-1" style="font-size:0.8rem;">目标 Z</label>
+                                <input type="number" id="ctrl-z" class="form-control ctrl-input" value="5" step="0.5">
+                            </div>
+                            <div>
+                                <label class="form-label mb-1" style="font-size:0.8rem;">目标名称</label>
+                                <input type="text" id="ctrl-target" class="form-control" style="max-width:150px;" value="insulator_1" placeholder="可选">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mb-3">
+                            <button class="btn btn-primary btn-sm px-3" onclick="ctrlSendNav()">
+                                发送导航任务
+                            </button>
+                            <button class="btn btn-success btn-sm px-3" onclick="ctrlSendInspect()">
+                                开始巡检
+                            </button>
+                        </div>
+                        <div id="ctrl-send-msg" class="api-result-box" style="display:none;"></div>
+
+                        <!-- 启动仿真 -->
+                        <hr>
+                        <h6 class="fw-bold mb-3">仿真控制</h6>
+                        <button class="btn btn-dark webots-launch-btn text-white px-4" onclick="ctrlStartWebots()">
+                            启动 Webots
+                        </button>
+                        <span id="ctrl-webots-msg" class="ms-2 text-muted" style="font-size:0.85rem;"></span>
+                    </div>
+
+                    <!-- 右列：状态 & 结果 -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">
+                            机器人状态
+                            <span id="ctrl-auto-badge" class="badge bg-info ms-2" style="font-size:0.7rem;">每2s刷新</span>
+                        </h6>
+                        <div class="mb-2">
+                            <span class="text-muted" style="font-size:0.85rem;">当前状态:</span>
+                            <span id="ctrl-state" class="badge state-badge state-unknown ms-1">unknown</span>
+                            <span class="ms-2 text-muted" style="font-size:0.85rem;">Webots:</span>
+                            <span id="ctrl-webots-status" class="badge state-badge bg-secondary ms-1">-</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted" style="font-size:0.85rem;">当前任务:</span>
+                            <span id="ctrl-current-task" style="font-size:0.85rem;">-</span>
+                        </div>
+
+                        <h6 class="fw-bold mt-3 mb-2">最新巡检结果</h6>
+                        <div id="ctrl-result-box" class="api-result-box">
+                            <span class="text-muted">暂无结果</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center text-muted py-3" style="font-size:0.8rem;">
+        电力巡检任务规划系统 &middot; 基于 RAG + DeepSeek-V3
+    </footer>
+
+    <script>
+        function fillExample(text) {
+            document.getElementById('instruction').value = text;
+            document.getElementById('instruction').focus();
+        }
+
+        function getRobotBadge(robotType) {
+            const cls = {
+                'UAV': 'robot-uav',
+                'WHEEL': 'robot-wheel',
+                'ARM': 'robot-arm'
+            }[robotType] || 'bg-secondary';
+            const label = {
+                'UAV': 'UAV 无人机',
+                'WHEEL': 'WHEEL 轮式',
+                'ARM': 'ARM 机械臂'
+            }[robotType] || robotType;
+            return `<span class="badge ${cls}">${label}</span>`;
+        }
+
+        async function submitPlan() {
+            const instruction = document.getElementById('instruction').value.trim();
+            if (!instruction) {
+                alert('请输入巡检指令');
+                return;
+            }
+
+            // 显示加载状态
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('result-area').style.display = 'none';
+            document.getElementById('error-box').style.display = 'none';
+
+            try {
+                const resp = await fetch('/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instruction: instruction })
+                });
+                const data = await resp.json();
+                renderResult(instruction, data);
+            } catch (e) {
+                renderResult(instruction, {
+                    success: false,
+                    error: '网络请求失败: ' + e.message
+                });
+            } finally {
+                document.getElementById('submit-btn').disabled = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function renderResult(instruction, data) {
+            document.getElementById('result-area').style.display = 'block';
+            document.getElementById('result-instruction').textContent = instruction;
+
+            if (!data.success) {
+                document.getElementById('error-box').style.display = 'block';
+                document.getElementById('error-msg').textContent = data.error || '未知错误';
+                document.getElementById('task-sequence-card').style.display = 'none';
+                document.getElementById('robot-assignment-card').style.display = 'none';
+                document.getElementById('summary-card').style.display = 'none';
+                document.getElementById('notes-card').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('error-box').style.display = 'none';
+            document.getElementById('task-sequence-card').style.display = 'block';
+            document.getElementById('robot-assignment-card').style.display = 'block';
+            document.getElementById('summary-card').style.display = 'block';
+
+            // 任务序列
+            const tasks = data.task_sequence || [];
+            let taskHtml = '';
+            tasks.forEach((t, idx) => {
+                const step = t.step || (idx + 1);
+                const actions = (t.action_sequence || []).map(a => `<li>${a}</li>`).join('');
+                const constraints = (t.constraints || []).join('、') || '无';
+                const safety = (t.safety_rules || []).join('、') || '无';
+
+                taskHtml += `
+                <div class="task-step">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="step-num">${step}</span>
+                        <strong class="me-2">${t.task_name || '未命名'}</strong>
+                        ${getRobotBadge(t.robot_type || '未知')}
+                    </div>
+                    <p class="mb-2 text-muted" style="font-size:0.9rem;">${t.task_description || ''}</p>
+                    <div class="row" style="font-size:0.85rem;">
+                        <div class="col-md-6">
+                            <strong>动作序列:</strong>
+                            <ol class="mb-0 ps-3">${actions || '<li>无</li>'}</ol>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>约束条件:</strong>
+                            <div class="text-muted">${constraints}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>安全规则:</strong>
+                            <div class="text-muted">${safety}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('task-sequence-body').innerHTML = taskHtml || '<p class="text-muted">无任务</p>';
+
+            // 机器人分配表
+            let tbodyHtml = '';
+            tasks.forEach((t, idx) => {
+                const constraintCount = (t.constraints || []).length;
+                tbodyHtml += `
+                <tr>
+                    <td class="text-center">${t.step || (idx + 1)}</td>
+                    <td>${t.task_name || '未命名'}</td>
+                    <td>${getRobotBadge(t.robot_type || '未知')}</td>
+                    <td class="text-center">${constraintCount}</td>
+                </tr>`;
+            });
+            document.getElementById('assignment-tbody').innerHTML = tbodyHtml;
+
+            // 汇总信息
+            const robotSet = new Set(tasks.map(t => t.robot_type).filter(Boolean));
+            document.getElementById('summary-tasks').textContent = tasks.length;
+            document.getElementById('summary-robots').textContent = robotSet.size;
+            const estTime = data.estimated_time || '未知';
+            document.getElementById('summary-time').textContent =
+                (typeof estTime === 'number' || /^\d+$/.test(estTime)) ? estTime + ' 分钟' : estTime;
+
+            // 备注
+            if (data.notes) {
+                document.getElementById('notes-card').style.display = 'block';
+                document.getElementById('result-notes').textContent = data.notes;
+            } else {
+                document.getElementById('notes-card').style.display = 'none';
+            }
+        }
+
+        // 回车提交
+        document.getElementById('instruction').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitPlan();
+            }
+        });
+
+        // ============ Webots 联动 ============
+
+        let selectedTarget = 'insulator_1';
+        let selectedPosition = [3, 0, 5];
+        let resultPollTimer = null;
+
+        function selectTarget(btn, target, position) {
+            document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedTarget = target;
+            selectedPosition = position;
+        }
+
+        async function dispatchTask() {
+            const defectType = document.getElementById('defect-type').value;
+            const statusEl = document.getElementById('dispatch-status');
+
+            document.getElementById('dispatch-btn').disabled = true;
+            statusEl.className = 'dispatch-status status-dispatched';
+            statusEl.textContent = '正在下发任务...';
+
+            try {
+                const resp = await fetch('/dispatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target: selectedTarget,
+                        target_position: selectedPosition,
+                        defect_type: defectType,
+                        action: 'inspect'
+                    })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    statusEl.className = 'dispatch-status status-dispatched';
+                    statusEl.innerHTML = '<strong>任务已下发!</strong> 目标: ' + selectedTarget +
+                        ' | 坐标: (' + selectedPosition.join(', ') + ')' +
+                        '<br><small class="text-muted">等待 Webots 机器人执行，可点击"查询巡检结果"...</small>';
+                    startResultPolling();
+                } else {
+                    statusEl.className = 'dispatch-status status-error';
+                    statusEl.textContent = '下发失败: ' + (data.error || '未知错误');
+                }
+            } catch (e) {
+                statusEl.className = 'dispatch-status status-error';
+                statusEl.textContent = '网络错误: ' + e.message;
+            } finally {
+                document.getElementById('dispatch-btn').disabled = false;
+            }
+        }
+
+        function startResultPolling() {
+            if (resultPollTimer) clearInterval(resultPollTimer);
+            let pollCount = 0;
+            resultPollTimer = setInterval(async () => {
+                pollCount++;
+                if (pollCount > 60) {
+                    clearInterval(resultPollTimer);
+                    return;
+                }
+                await pollResult();
+            }, 2000);
+        }
+
+        async function pollResult() {
+            try {
+                const resp = await fetch('/robot_result');
+                const data = await resp.json();
+                if (data.success && data.result) {
+                    if (resultPollTimer) clearInterval(resultPollTimer);
+                    showRobotResult(data.result);
+                }
+            } catch (e) { /* 静默 */ }
+        }
+
+        function showRobotResult(result) {
+            const statusEl = document.getElementById('dispatch-status');
+            statusEl.className = 'dispatch-status status-completed';
+            statusEl.textContent = '巡检完成! ' + (result.message || '');
+
+            const body = document.getElementById('robot-result-body');
+            const ins = result.inspection_result || {};
+            body.innerHTML = `
+                <dt class="col-sm-4">任务ID</dt><dd class="col-sm-8">${result.task_id || '-'}</dd>
+                <dt class="col-sm-4">巡检目标</dt><dd class="col-sm-8">${result.target || '-'}</dd>
+                <dt class="col-sm-4">任务状态</dt><dd class="col-sm-8"><span class="badge bg-success">${result.status || '-'}</span></dd>
+                <dt class="col-sm-4">机器人位置</dt><dd class="col-sm-8">(${(result.robot_position || []).join(', ')})</dd>
+                <dt class="col-sm-4">拍照</dt><dd class="col-sm-8">${ins.photo_taken ? '是' : '否'}</dd>
+                <dt class="col-sm-4">检测到缺陷</dt><dd class="col-sm-8">${ins.defect_detected ? '<span class="text-danger fw-bold">是</span>' : '否'}</dd>
+                <dt class="col-sm-4">缺陷详情</dt><dd class="col-sm-8">${ins.defect_detail || '无'}</dd>
+                <dt class="col-sm-4">置信度</dt><dd class="col-sm-8">${ins.confidence ? (ins.confidence * 100).toFixed(0) + '%' : '-'}</dd>
+                <dt class="col-sm-4">完成时间</dt><dd class="col-sm-8">${result.timestamp || '-'}</dd>
+            `;
+            document.getElementById('robot-result-card').style.display = 'block';
+        }
+
+        async function clearResult() {
+            try {
+                await fetch('/robot_result', { method: 'DELETE' });
+                document.getElementById('robot-result-card').style.display = 'none';
+                const statusEl = document.getElementById('dispatch-status');
+                statusEl.className = 'dispatch-status status-waiting';
+                statusEl.textContent = '等待下发任务...';
+                if (resultPollTimer) clearInterval(resultPollTimer);
+            } catch (e) { /* 忽略 */ }
+        }
+
+        // ============ 机器人控制面板 ============
+
+        async function ctrlSendNav() {
+            await ctrlSendTask('navigate');
+        }
+
+        async function ctrlSendInspect() {
+            await ctrlSendTask('inspect');
+        }
+
+        async function ctrlSendTask(action) {
+            const x = parseFloat(document.getElementById('ctrl-x').value) || 0;
+            const z = parseFloat(document.getElementById('ctrl-z').value) || 0;
+            const target = document.getElementById('ctrl-target').value.trim() || 'custom_target';
+            const msgEl = document.getElementById('ctrl-send-msg');
+
+            msgEl.style.display = 'block';
+            msgEl.innerHTML = '<span class="text-muted">发送中...</span>';
+
+            try {
+                const resp = await fetch('/api/send_task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target: target,
+                        target_position: [x, 0, z],
+                        action: action,
+                        defect_type: ''
+                    })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    msgEl.innerHTML = '<span class="text-success">&#10003; 任务已发送</span>'
+                        + '<pre class="mb-0 mt-1" style="font-size:0.8rem;">' + JSON.stringify(data.task, null, 2) + '</pre>';
+                } else {
+                    msgEl.innerHTML = '<span class="text-danger">&#10007; ' + (data.error || '发送失败') + '</span>';
+                }
+            } catch (e) {
+                msgEl.innerHTML = '<span class="text-danger">&#10007; 网络错误: ' + e.message + '</span>';
+            }
+        }
+
+        async function ctrlStartWebots() {
+            const msgEl = document.getElementById('ctrl-webots-msg');
+            msgEl.textContent = '启动中...';
+            try {
+                const resp = await fetch('/api/start_webots', { method: 'POST' });
+                const data = await resp.json();
+                if (data.success) {
+                    msgEl.innerHTML = '<span class="text-success">&#10003; 已启动 (PID: ' + data.pid + ')</span>';
+                } else {
+                    msgEl.innerHTML = '<span class="text-warning">' + (data.message || data.error) + '</span>';
+                }
+            } catch (e) {
+                msgEl.innerHTML = '<span class="text-danger">网络错误</span>';
+            }
+        }
+
+        const STATE_LABELS = {
+            idle: '空闲', navigating: '导航中', inspecting: '巡检中',
+            completed: '已完成', unknown: '未知'
+        };
+
+        async function ctrlRefreshStatus() {
+            try {
+                const resp = await fetch('/api/robot_status');
+                const data = await resp.json();
+                if (data.success) {
+                    const s = data.status;
+                    const stateEl = document.getElementById('ctrl-state');
+                    const state = s.state || 'unknown';
+                    stateEl.textContent = STATE_LABELS[state] || state;
+                    stateEl.className = 'badge state-badge state-' + state + ' ms-1';
+
+                    const webotsEl = document.getElementById('ctrl-webots-status');
+                    webotsEl.textContent = s.webots_running ? '运行中' : '未启动';
+                    webotsEl.className = 'badge state-badge ms-1 ' + (s.webots_running ? 'bg-success' : 'bg-secondary');
+
+                    const taskEl = document.getElementById('ctrl-current-task');
+                    if (s.current_task) {
+                        taskEl.textContent = s.current_task.target + ' (' + (s.current_task.target_position || []).join(', ') + ')';
+                    } else {
+                        taskEl.textContent = '-';
+                    }
+                }
+            } catch (e) { /* 静默 */ }
+
+            try {
+                const resp = await fetch('/api/robot_result');
+                const data = await resp.json();
+                const box = document.getElementById('ctrl-result-box');
+                if (data.success && data.result) {
+                    const r = data.result;
+                    const ins = r.inspection_result || {};
+                    box.innerHTML =
+                        '<strong>' + (r.target || '-') + '</strong> '
+                        + '<span class="badge bg-success">' + (r.status || '-') + '</span><br>'
+                        + '位置: (' + (r.robot_position || []).join(', ') + ')<br>'
+                        + '缺陷: ' + (ins.defect_detected ? '<span class="text-danger fw-bold">' + (ins.defect_detail || '是') + '</span>' : '无') + '<br>'
+                        + '置信度: ' + (ins.confidence ? (ins.confidence * 100).toFixed(0) + '%' : '-')
+                        + ' | ' + (r.timestamp || '');
+                } else {
+                    box.innerHTML = '<span class="text-muted">暂无结果</span>';
+                }
+            } catch (e) { /* 静默 */ }
+        }
+
+        ctrlRefreshStatus();
+        setInterval(ctrlRefreshStatus, 2000);
+    </script>
+</body>
+</html>

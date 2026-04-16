@@ -1,0 +1,171 @@
+#VRML_SIM R2025a utf8
+
+WorldInfo {
+  title "Power Station Inspection"
+}
+Viewpoint {
+  orientation -0.2513940509195751 -0.08209045117387032 0.9643973190486982 3.751760031764379
+  position 21.82060873596598 18.090804833670713 19.90986702229749
+}
+DirectionalLight {
+  direction -0.5 -1 -0.5
+  intensity 0.8
+}
+Solid {
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.3 0.6 0.2
+        }
+      }
+      geometry Plane {
+        size 30 30
+      }
+    }
+  ]
+  boundingObject Plane {
+    size 30 30
+  }
+}
+Solid {
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.5 0.5 0.5
+        }
+      }
+      geometry Box {
+        size 2 2 6
+      }
+    }
+  ]
+  name "tower_1"
+}
+Solid {
+  translation 1 1 5
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.9 0.5 0.2
+        }
+      }
+      geometry Cylinder {
+        height 0.8
+        radius 0.3
+      }
+    }
+  ]
+  name "insulator_1"
+}
+Solid {
+  translation -1 1 5
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.9 0.5 0.2
+        }
+      }
+      geometry Cylinder {
+        height 0.8
+        radius 0.3
+      }
+    }
+  ]
+  name "insulator_2"
+}
+Solid {
+  translation 6 -4 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.2 0.3 0.8
+        }
+      }
+      geometry Box {
+        size 2.5 2 1.5
+      }
+    }
+  ]
+  name "transformer_1"
+}
+Solid {
+  translation -5 -3 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.2 0.7 0.2
+        }
+      }
+      geometry Box {
+        size 1.5 1 2
+      }
+    }
+  ]
+  name "switchgear_1"
+}
+DEF ROBOT Robot {
+  translation 3 0 0.1
+  children [
+    DEF LEFT_WHEEL Solid {
+      translation -0.2 0 0.05
+      name "left_wheel"
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.1 0.1 0.1
+            }
+          }
+          geometry Cylinder {
+            height 0.1
+            radius 0.05
+          }
+        }
+      ]
+    }
+    DEF RIGHT_WHEEL Solid {
+      translation 0.2 0 0.05
+      name "right_wheel"
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.1 0.1 0.1
+            }
+          }
+          geometry Cylinder {
+            height 0.1
+            radius 0.05
+          }
+        }
+      ]
+    }
+    DEF BODY Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.8 0.2 0.2
+        }
+      }
+      geometry Box {
+        size 0.5 0.4 0.1
+      }
+    }
+  ]
+  boundingObject Group {
+    children [
+      Box {
+        size 0.5 0.4 0.1
+      }
+    ]
+  }
+  physics Physics {
+    density 100
+  }
+  controller "patrol_controller"
+}

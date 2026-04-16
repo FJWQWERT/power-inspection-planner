@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+# 虚拟环境
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# 日志和临时文件
+*.log
+*.tmp
+shared/*.json
+!shared/.gitkeep
+
+# 上传的图片
+data/uploads/
+
+# Webots 临时文件
+*.cache

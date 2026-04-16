@@ -1,0 +1,67 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/adept/pioneer3/protos/Pioneer3dx.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+
+WorldInfo {
+  title "Power Station Inspection (Simple)"
+  basicTimeStep 16
+}
+
+Viewpoint {
+  orientation -0.25 -0.08 0.96 3.75
+  position 12 10 15
+}
+
+# 背景天空球
+TexturedBackground {
+}
+
+TexturedBackgroundLight {
+}
+
+# 从上方斜照的方向光
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -0.5 -1 -0.3
+  intensity 0.8
+  castShadows TRUE
+}
+
+# 地板：灰色平面 20x20
+Solid {
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.6 0.6 0.6
+        }
+      }
+      geometry Plane {
+        size 20 20
+      }
+    }
+  ]
+  boundingObject Plane {
+    size 20 20
+  }
+  name "floor"
+}
+
+# Pioneer 3-DX 机器人
+# 内置设备: left wheel / right wheel 电机, so0~so15 距离传感器
+# extensionSlot 中添加 GPS 和 Compass（patrol_controller 需要）
+Pioneer3dx {
+  translation 0 0.1 0
+  name "pioneer3dx"
+  controller "patrol_controller"
+  extensionSlot [
+    GPS {
+      name "gps"
+    }
+    Compass {
+      name "compass"
+    }
+  ]
+}
